@@ -126,14 +126,23 @@ def convert_text_to_speech(text, voice_id):
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
-    voices = get_available_voices()
+    try:
+        voices = get_available_voices()
+        app.logger.info(f'Found {sum(len(v) for v in voices.values())} voices across {len(voices)} languages')
+    except Exception as e:
+        app.logger.error(f'Error loading voices: {str(e)}')
+        voices = {}
     
     if request.method == 'POST':
         text = request.form['text']
         voice_id = int(request.form['voice'])
         
-        output_file = convert_text_to_speech(text, voice_id)
-        return send_file(output_file, mimetype='audio/wav')
+        try:
+            output_file = convert_text_to_speech(text, voice_id)
+            return send_file(output_file, mimetype='audio/wav')
+        except Exception as e:
+            app.logger.error(f'Error in text-to-speech conversion: {str(e)}')
+            return str(e), 500
     
     return render_template('index.html', voices=voices)
 
