@@ -21,16 +21,19 @@
                 <div class="invalid-feedback">Por favor, insira um texto para converter.</div>
             </div>
             <div class="mb-3">
-                <label for="voice" class="form-label">Selecione a voz:</label>
-                <select class="form-select" id="voice" name="voice" required>
-                    <option value="" selected disabled>Escolha uma voz</option>
+                <label for="language" class="form-label">Selecione o idioma:</label>
+                <select class="form-select" id="language" required>
+                    <option value="" selected disabled>Escolha um idioma</option>
                     {% for language, voice_list in voices.items() %}
-                    <optgroup label="{{ language }}">
-                        {% for voice_id, voice_name in voice_list %}
-                        <option value="{{ voice_id }}">{{ voice_name }}</option>
-                        {% endfor %}
-                    </optgroup>
+                    <option value="{{ language }}">{{ language }}</option>
                     {% endfor %}
+                </select>
+                <div class="invalid-feedback">Por favor, selecione um idioma.</div>
+            </div>
+            <div class="mb-3">
+                <label for="voice" class="form-label">Selecione a voz:</label>
+                <select class="form-select" id="voice" name="voice" required disabled>
+                    <option value="" selected disabled>Escolha uma voz</option>
                 </select>
                 <div class="invalid-feedback">Por favor, selecione uma voz.</div>
             </div>
@@ -54,11 +57,40 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const form = document.querySelector('form');
+            const languageSelect = document.getElementById('language');
+            const voiceSelect = document.getElementById('voice');
             const convertButton = document.getElementById('convertButton');
             const loadingIndicator = document.getElementById('loadingIndicator');
             const downloadSection = document.getElementById('downloadSection');
             const audioPlayer = document.getElementById('audioPlayer');
             const downloadButton = document.getElementById('downloadButton');
+
+            // Store all voices data
+            const voicesData = {
+                {% for language, voice_list in voices.items() %}
+                "{{ language }}": [
+                    {% for voice_id, voice_name in voice_list %}
+                    {id: "{{ voice_id }}", name: "{{ voice_name }}"},
+                    {% endfor %}
+                ],
+                {% endfor %}
+            };
+
+            // Update voice options when language changes
+            languageSelect.addEventListener('change', function() {
+                const selectedLanguage = this.value;
+                const voices = voicesData[selectedLanguage] || [];
+
+                voiceSelect.innerHTML = '<option value="" disabled selected>Escolha uma voz</option>';
+                voices.forEach(voice => {
+                    const option = document.createElement('option');
+                    option.value = voice.id;
+                    option.textContent = voice.name;
+                    voiceSelect.appendChild(option);
+                });
+
+                voiceSelect.disabled = false;
+            });
 
             form.addEventListener('submit', async function(e) {
                 e.preventDefault();
