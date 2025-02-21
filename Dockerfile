@@ -6,19 +6,18 @@ ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
 # Install system dependencies and voice packages
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
     espeak \
     libespeak1 \
     espeak-data \
     speech-dispatcher \
     speech-dispatcher-espeak \
-    mbrola \
-    mbrola-* \
-    && apt-get install -y locales \
-    && sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen \
-    && locale-gen \
-    && update-locale LANG=en_US.UTF-8 \
-    && rm -rf /var/lib/apt/lists/*
+    locales && \
+    rm -rf /var/lib/apt/lists/* && \
+    sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen && \
+    locale-gen && \
+    update-locale LANG=en_US.UTF-8
 
 # Set environment variables for locale
 ENV LANG=en_US.UTF-8 \
