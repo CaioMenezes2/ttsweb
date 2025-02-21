@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, send_file
+from docx import Document
 import pyttsx3
 import os
 import time
@@ -146,6 +147,23 @@ def index():
             return str(e), 500
     
     return render_template('index.html', voices=voices)
+
+@app.route('/read_docx', methods=['POST'])
+def read_docx():
+    if 'file' not in request.files:
+        return 'No file uploaded', 400
+    
+    file = request.files['file']
+    if not file.filename.endswith('.docx'):
+        return 'Invalid file format', 400
+    
+    try:
+        doc = Document(file)
+        text = '\n'.join([paragraph.text for paragraph in doc.paragraphs])
+        return text
+    except Exception as e:
+        app.logger.error(f'Error reading DOCX file: {str(e)}')
+        return 'Error reading DOCX file', 500
 
 if __name__ == '__main__':
     app.run(debug=True)
