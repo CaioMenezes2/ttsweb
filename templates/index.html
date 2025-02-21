@@ -282,7 +282,15 @@
                 const voiceId = formData.get('voice');
 
                 try {
+                    if (!voiceId) {
+                        throw new Error('Por favor, selecione uma voz antes de converter.');
+                    }
+
                     for (let i = 0; i < texts.length; i++) {
+                        if (!texts[i].trim()) {
+                            throw new Error('O texto não pode estar vazio.');
+                        }
+
                         const currentFormData = new FormData();
                         currentFormData.append('text', texts[i]);
                         currentFormData.append('voice', voiceId);
@@ -292,7 +300,10 @@
                             body: currentFormData
                         });
 
-                        if (!response.ok) throw new Error(`Erro na conversão do texto ${i + 1}`);
+                        if (!response.ok) {
+                            const errorText = await response.text();
+                            throw new Error(errorText || `Erro na conversão do texto ${i + 1}`);
+                        }
 
                         const blob = await response.blob();
                         const audioUrl = URL.createObjectURL(blob);

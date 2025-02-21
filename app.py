@@ -88,41 +88,48 @@ def get_available_voices():
 
 def convert_text_to_speech(text, voice_id):
     if not text or not isinstance(voice_id, int):
+        app.logger.error(f'Invalid input - text: {bool(text)}, voice_id type: {type(voice_id)}')
         raise ValueError('Invalid text or voice ID provided')
 
+    output_file = os.path.join(app.config['UPLOAD_FOLDER'], 'output.wav')
     try:
         engine = pyttsx3.init()
         voices = engine.getProperty('voices')
         
         if voice_id >= len(voices):
+            app.logger.error(f'Invalid voice ID {voice_id}. Available voices: {len(voices)}')
             raise ValueError(f'Voice ID {voice_id} is not available')
             
         engine.setProperty('voice', voices[voice_id].id)
         engine.setProperty('rate', 150)
         
-        output_file = os.path.join(app.config['UPLOAD_FOLDER'], 'output.wav')
-        
         # Clear any existing file
         if os.path.exists(output_file):
             os.remove(output_file)
+            app.logger.info('Removed existing output file')
         
+        app.logger.info(f'Starting audio conversion for text of length {len(text)}')
         engine.save_to_file(text, output_file)
         engine.runAndWait()
         
         # Verify the file exists and has content with timeout
-        max_attempts = 10
+        max_attempts = 20  # Increased timeout
         attempt = 0
         while attempt < max_attempts:
             if os.path.exists(output_file) and os.path.getsize(output_file) > 0:
+                app.logger.info(f'Successfully generated audio file: {output_file}')
                 return output_file
             time.sleep(0.5)
             attempt += 1
             
+        app.logger.error('Timeout: Failed to generate audio file after multiple attempts')
         raise Exception('Timeout: Failed to generate audio file')
         
     except Exception as e:
+        app.logger.error(f'Error in text-to-speech conversion: {str(e)}')
         if os.path.exists(output_file):
             os.remove(output_file)
+            app.logger.info('Cleaned up incomplete output file')
         raise Exception(f'Error generating audio: {str(e)}')
 
 
