@@ -12,7 +12,18 @@ RUN apt-get update && apt-get install -y \
     espeak-data \
     speech-dispatcher \
     speech-dispatcher-espeak \
+    mbrola \
+    mbrola-* \
+    && apt-get install -y locales \
+    && sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen \
+    && locale-gen \
+    && update-locale LANG=en_US.UTF-8 \
     && rm -rf /var/lib/apt/lists/*
+
+# Set environment variables for locale
+ENV LANG=en_US.UTF-8 \
+    LANGUAGE=en_US:en \
+    LC_ALL=en_US.UTF-8
 
 # Set work directory
 WORKDIR /app
