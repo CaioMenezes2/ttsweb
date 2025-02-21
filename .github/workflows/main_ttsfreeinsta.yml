@@ -22,15 +22,15 @@ jobs:
     - name: Log in to registry
       uses: docker/login-action@v2
       with:
-        registry: https://mcr.microsoft.com/
-        username: ${{ secrets.AzureAppService_ContainerUsername_ed1921d206a94777b86c8f959de4c9e0 }}
-        password: ${{ secrets.AzureAppService_ContainerPassword_f7a652a0bb194b6eb8c8a30662c98c6a }}
+        registry: ${{ secrets.REGISTRY_LOGIN_SERVER }}
+        username: ${{ secrets.REGISTRY_USERNAME }}
+        password: ${{ secrets.REGISTRY_PASSWORD }}
 
     - name: Build and push container image to registry
       uses: docker/build-push-action@v3
       with:
         push: true
-        tags: mcr.microsoft.com/${{ secrets.AzureAppService_ContainerUsername_ed1921d206a94777b86c8f959de4c9e0 }}/azure-app-service/windows/parkingpage:${{ github.sha }}
+        tags: ${{ secrets.REGISTRY_LOGIN_SERVER }}/ttsfreeinsta:${{ github.sha }}
         file: ./Dockerfile
 
   deploy:
@@ -48,4 +48,4 @@ jobs:
         app-name: 'ttsfreeinsta'
         slot-name: 'production'
         publish-profile: ${{ secrets.AzureAppService_PublishProfile_938566b22a484e7ebefa9043c896f58e }}
-        images: 'mcr.microsoft.com/${{ secrets.AzureAppService_ContainerUsername_ed1921d206a94777b86c8f959de4c9e0 }}/azure-app-service/windows/parkingpage:${{ github.sha }}'
+        images: '${{ secrets.REGISTRY_LOGIN_SERVER }}/ttsfreeinsta:${{ github.sha }}'
