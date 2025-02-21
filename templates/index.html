@@ -21,19 +21,16 @@
                 <div class="invalid-feedback">Por favor, insira um texto para converter.</div>
             </div>
             <div class="mb-3">
-                <label for="language" class="form-label">Selecione o idioma:</label>
-                <select class="form-select" id="language" name="language" required>
-                    <option value="" selected disabled>Escolha um idioma</option>
-                    {% for language in voices.keys() %}
-                    <option value="{{ language }}">{{ language }}</option>
-                    {% endfor %}
-                </select>
-                <div class="invalid-feedback">Por favor, selecione um idioma.</div>
-            </div>
-            <div class="mb-3">
                 <label for="voice" class="form-label">Selecione a voz:</label>
-                <select class="form-select" id="voice" name="voice" required disabled>
+                <select class="form-select" id="voice" name="voice" required>
                     <option value="" selected disabled>Escolha uma voz</option>
+                    {% for language, voice_list in voices.items() %}
+                    <optgroup label="{{ language }}">
+                        {% for voice_id, voice_name in voice_list %}
+                        <option value="{{ voice_id }}">{{ voice_name }}</option>
+                        {% endfor %}
+                    </optgroup>
+                    {% endfor %}
                 </select>
                 <div class="invalid-feedback">Por favor, selecione uma voz.</div>
             </div>
@@ -45,6 +42,7 @@
                 <span class="ms-2">Convertendo texto para áudio...</span>
             </div>
             <div id="downloadSection" class="d-none mt-3">
+                <audio id="audioPlayer" controls class="w-100 mb-3"></audio>
                 <a href="#" id="downloadButton" class="btn btn-success" download="audio.wav">
                     <i class="bi bi-download"></i> Baixar Áudio
                 </a>
@@ -53,93 +51,51 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
     <script>
-        // Form validation
-        (function () {
-            'use strict'
-            var forms = document.querySelectorAll('.needs-validation')
-            Array.prototype.slice.call(forms).forEach(function (form) {
-                form.addEventListener('submit', function (event) {
-                    if (!form.checkValidity()) {
-                        event.preventDefault()
-                        event.stopPropagation()
-                    }
-                    form.classList.add('was-validated')
-                }, false)
-            })
-        })()
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.querySelector('form');
+            const convertButton = document.getElementById('convertButton');
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            const downloadSection = document.getElementById('downloadSection');
+            const audioPlayer = document.getElementById('audioPlayer');
+            const downloadButton = document.getElementById('downloadButton');
 
-        // Voice selection logic
-        const voices = {{ voices|tojson|safe }};
-        const languageSelect = document.getElementById('language');
-        const voiceSelect = document.getElementById('voice');
-
-        languageSelect.addEventListener('change', function() {
-            const selectedLanguage = this.value;
-            const availableVoices = voices[selectedLanguage];
-
-            // Clear and enable voice select
-            voiceSelect.innerHTML = '<option value="" selected disabled>Escolha uma voz</option>';
-            voiceSelect.disabled = false;
-
-            // Add voice options
-            availableVoices.forEach(function([id, name]) {
-                const option = document.createElement('option');
-                option.value = id;
-                option.textContent = name;
-                voiceSelect.appendChild(option);
-            });
-        });
-
-        // Form submission handling
-        const form = document.querySelector('form');
-        const convertButton = document.getElementById('convertButton');
-        const loadingIndicator = document.getElementById('loadingIndicator');
-        const downloadSection = document.getElementById('downloadSection');
-        const downloadButton = document.getElementById('downloadButton');
-
-        form.addEventListener('submit', async function(event) {
-            event.preventDefault();
-            if (!form.checkValidity()) {
-                event.stopPropagation();
-                form.classList.add('was-validated');
-                return;
-            }
-
-            // Show loading indicator
-            convertButton.disabled = true;
-            loadingIndicator.classList.remove('d-none');
-            downloadSection.classList.add('d-none');
-
-            try {
-                const formData = new FormData(form);
-                const response = await fetch('/', {
-                    method: 'POST',
-                    body: formData,
-                    timeout: 30000 // 30 second timeout
-                });
-
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    throw new Error(errorText || 'Conversion failed');
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                if (!form.checkValidity()) {
+                    e.stopPropagation();
+                    form.classList.add('was-validated');
+                    return;
                 }
 
-                const blob = await response.blob();
-                if (blob.size > 0) {
+                convertButton.disabled = true;
+                loadingIndicator.classList.remove('d-none');
+                downloadSection.classList.add('d-none');
+
+                try {
+                    const formData = new FormData(form);
+                    const response = await fetch('/', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Erro na conversão');
+                    }
+
+                    const blob = await response.blob();
                     const audioUrl = URL.createObjectURL(blob);
-                    // Update download button and show it
+                    
+                    audioPlayer.src = audioUrl;
                     downloadButton.href = audioUrl;
                     downloadSection.classList.remove('d-none');
-                } else {
-                    throw new Error('Audio conversion produced an empty file');
+                } catch (error) {
+                    alert('Erro ao converter texto para áudio: ' + error.message);
+                } finally {
+                    convertButton.disabled = false;
+                    loadingIndicator.classList.add('d-none');
                 }
-            } catch (error) {
-                alert('Erro na conversão: ' + error.message);
-            } finally {
-                convertButton.disabled = false;
-                loadingIndicator.classList.add('d-none');
-            }
+            });
         });
     </script>
 </body>
