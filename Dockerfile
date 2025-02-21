@@ -13,6 +13,7 @@ RUN apt-get update && \
     espeak-data \
     speech-dispatcher \
     speech-dispatcher-espeak \
+    ffmpeg \
     locales && \
     rm -rf /var/lib/apt/lists/* && \
     sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen && \
